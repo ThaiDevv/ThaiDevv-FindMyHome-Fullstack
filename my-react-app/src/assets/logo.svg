@@ -1,0 +1,16 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Location pin with house icon -->
+  <g>
+    <!-- Pin shape (teardrop) -->
+    <path d="M20 3C12.82 3 7 8.82 7 16C7 23.5 20 37 20 37C20 37 33 23.5 33 16C33 8.82 27.18 3 20 3ZM20 5C26.08 5 31 9.92 31 16C31 21.5 20 33.5 20 33.5C20 33.5 9 21.5 9 16C9 9.92 13.92 5 20 5Z" fill="#007AFF"/>
+    <path d="M20 3C12.82 3 7 8.82 7 16C7 23.5 20 37 20 37C20 37 33 23.5 33 16C33 8.82 27.18 3 20 3Z" fill="#007AFF"/>
+    <!-- House inside pin -->
+    <path d="M20 11L14.5 16V24H16.5V18H23.5V24H25.5V16L20 11Z" fill="white"/>
+    <!-- House roof -->
+    <path d="M20 11L14.5 16L20 11L25.5 16L20 11Z" fill="white"/>
+    <!-- House windows -->
+    <rect x="16.5" y="19" width="2.5" height="2.5" fill="#007AFF" rx="0.5"/>
+    <rect x="21" y="19" width="2.5" height="2.5" fill="#007AFF" rx="0.5"/>
+  </g>
+</svg>
+
