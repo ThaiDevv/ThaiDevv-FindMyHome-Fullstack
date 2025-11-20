@@ -1,8 +1,1 @@
-node_modules/
-/server/node_modules/
-/my-react-app/node_modules/
-.env
-dist/
-build/
-*.log
-.DS_Store
+VITE_API_URL=http://localhost:5000/api
