@@ -1,30 +1,32 @@
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcrypt'); // Thư viện mã hóa pass
-const jwt = require('jsonwebtoken'); // Thư viện tạo token
+const bcrypt = require('bcrypt'); 
+const jwt = require('jsonwebtoken');
 const db = require('./db'); 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const { verifyToken, verifyAdmin } = require('./middleware/authMiddleware');
 app.use(cors());
 app.use(express.json());
-const crypto = require('crypto'); // Thư viện tạo chuỗi ngẫu nhiên có sẵn
-// --- API: Lấy danh sách phòng (Giữ nguyên) ---
+const crypto = require('crypto'); 
 app.get('/api/rooms', (req, res) => {
-  // Chỉ lấy bài có status = 'approved'
   const sql = "SELECT * FROM rooms WHERE status = 'approved' ORDER BY created_at DESC";
+  
   db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: "Lỗi server" });
-    const mappedResults = results.map(room => ({ ...room, rawPrice: room.price }));
-    res.json(mappedResults);
+    if (err) {
+      console.error("Lỗi lấy danh sách phòng:", err);
+      return res.status(500).json({ error: "Lỗi server" });
+    }
+    const mappedResults = results.map(room => ({
+      ...room,
+      rawPrice: room.price,   
+      image: room.image_url || "https://via.placeholder.com/300" 
+    }));
+    res.json(mappedResults); 
   });
-})
-
-// API: Lấy chi tiết 1 phòng (Kèm thông tin chủ trọ)
+});
 app.get('/api/rooms/:id', (req, res) => {
   const id = req.params.id;
-  
-  // SỬA CÂU SQL: Join với bảng users để lấy phone và full_name
   const sql = `
     SELECT 
       r.*, 
@@ -44,38 +46,23 @@ app.get('/api/rooms/:id', (req, res) => {
     res.json({ ...room, rawPrice: room.price });
   });
 });
-// =============================================
-// PHẦN MỚI: AUTHENTICATION (Đăng ký & Đăng nhập)
-// =============================================
 
-// 1. API Đăng ký (Register)
+
 app.post('/api/auth/register', async (req, res) => {
-  // Nhận thêm 'phone' từ Frontend
   const { email, password, full_name, role, phone } = req.body; 
-
-  // Kiểm tra dữ liệu đầu vào (Bắt buộc phải có SĐT)
   if (!email || !password || !full_name || !phone) {
     return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin (bao gồm SĐT)!" });
   }
-
   try {
-    // Kiểm tra email đã tồn tại chưa
     const checkUserSql = "SELECT * FROM users WHERE email = ?";
     db.promise().query(checkUserSql, [email])
       .then(async ([rows]) => {
         if (rows.length > 0) {
           return res.status(400).json({ message: "Email này đã được sử dụng!" });
         }
-
-        // Mã hóa mật khẩu
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
-        // --- SỬA CÂU SQL TẠI ĐÂY ---
-        // Thêm cột 'phone' vào câu lệnh INSERT
         const insertSql = "INSERT INTO users (email, password, full_name, role, phone) VALUES (?, ?, ?, ?, ?)";
-        
-        // Thêm biến 'phone' vào mảng giá trị
         await db.promise().query(insertSql, [email, hashedPassword, full_name, role || 'tenant', phone]);
 
         res.status(201).json({ message: "Đăng ký thành công!" });
