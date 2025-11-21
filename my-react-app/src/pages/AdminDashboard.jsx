@@ -179,7 +179,7 @@ const handleLockUser = (id, currentStatus) => {
                           onClick={() => handleDeleteRoom(room.id)}
                           style={{background:'#ff3b30', color:'white', border:'none', padding:'6px 12px', borderRadius:'4px', cursor:'pointer'}}
                         >
-                          🗑️ Xóa
+                          Xóa
                         </button>
                       </td>
                     </tr>
@@ -200,7 +200,7 @@ const handleLockUser = (id, currentStatus) => {
                       <td style={{padding:'10px'}}>{u.id}</td>
                       <td>{u.full_name}</td>
                       <td>{u.email}</td>
-                      <td>{u.role === 'admin' ? '🛡️ Admin' : (u.role === 'host' ? '🏠 Chủ trọ' : '👤 Khách')}</td>
+                      <td>{u.role === 'admin' ? 'Admin' : (u.role === 'host' ? 'Chủ trọ' : 'Khách')}</td>
                       <td>{u.status === 'active' ? <span style={{color:'green'}}>Hoạt động</span> : <span style={{color:'red'}}>Đã khóa</span>}</td>
                       <td>
                         {u.role !== 'admin' && (

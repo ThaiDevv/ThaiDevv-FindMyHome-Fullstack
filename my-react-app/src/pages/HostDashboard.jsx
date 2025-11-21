@@ -50,9 +50,9 @@ const HostDashboard = () => {
 
   // Style trạng thái
   const getStatusBadge = (status) => {
-    if(status === 'confirmed') return <span style={{color:'green', fontWeight:'bold'}}>✅ Đã xác nhận</span>;
-    if(status === 'rejected') return <span style={{color:'red', fontWeight:'bold'}}>❌ Đã từ chối</span>;
-    return <span style={{color:'#f5a623', fontWeight:'bold'}}>⏳ Chờ duyệt</span>;
+    if(status === 'confirmed') return <span style={{color:'green', fontWeight:'bold'}}> Đã xác nhận</span>;
+    if(status === 'rejected') return <span style={{color:'red', fontWeight:'bold'}}> Đã từ chối</span>;
+    return <span style={{color:'#f5a623', fontWeight:'bold'}}> Chờ duyệt</span>;
   };
   const getRoomStatusBadge = (status) => {
     if (status === 'approved') {
@@ -85,7 +85,7 @@ const HostDashboard = () => {
                 borderRadius:'8px 8px 0 0', cursor:'pointer', fontWeight:'500'
               }}
             >
-              📅 Quản lý Lịch hẹn ({bookings.length})
+              Quản lý Lịch hẹn ({bookings.length})
             </button>
             <button 
                onClick={() => setActiveTab('rooms')}
@@ -97,7 +97,7 @@ const HostDashboard = () => {
                 borderRadius:'8px 8px 0 0', cursor:'pointer', fontWeight:'500'
               }}
             >
-              🏠 Bài đăng của tôi ({myRooms.length})
+              Bài đăng của tôi ({myRooms.length})
             </button>
           </div>
 
