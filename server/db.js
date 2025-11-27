@@ -1,8 +1,6 @@
 const mysql = require('mysql2');
-require('dotenv').config(); // Nhớ cài: npm install dotenv
-
 const db = mysql.createConnection({
-  host: 'localhost',       // Phải là process.env...
+  host: 'localhost',       
   user: 'root',
   password: '123456',
   database: 'findmyhome_db',

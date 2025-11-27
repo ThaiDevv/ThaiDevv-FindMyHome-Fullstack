@@ -88,18 +88,13 @@ app.post('/api/auth/login', (req, res) => {
     if (results.length === 0) {
       return res.status(401).json({ message: "Email hoặc mật khẩu không đúng!" });
     }
-
     const user = results[0];
-
-    // --- THÊM ĐOẠN KIỂM TRA NÀY VÀO ---
     // Nếu trạng thái là 'banned' thì chặn ngay lập tức
     if (user.status === 'banned') {
       return res.status(403).json({ 
         message: "Tài khoản của bạn đã bị KHÓA do vi phạm quy định! Vui lòng liên hệ Admin." 
       });
     }
-    // ----------------------------------
-
     // So sánh mật khẩu (Giữ nguyên)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -112,7 +107,6 @@ app.post('/api/auth/login', (req, res) => {
       'SECRET_KEY_CUA_BAN', 
       { expiresIn: '1d' } 
     );
-
     res.json({
       message: "Đăng nhập thành công",
       token,
@@ -139,17 +133,12 @@ app.post('/api/rooms', (req, res) => {
     image_url, 
     owner_id 
   } = req.body;
-
-  // Tạo chuỗi giá hiển thị (Ví dụ: 2500000 -> "2,5 triệu/tháng")
-  // Đây là xử lý đơn giản, bạn có thể làm kỹ hơn ở Frontend
   const formatted_price = (price / 1000000).toFixed(1).replace('.0', '') + ' triệu/tháng';
-
   const sql = `
     INSERT INTO rooms 
     (title, type, price, formatted_price, area, location, address, description, image_url, owner_id) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
-
   const values = [
     title, 
     type, 
@@ -189,29 +178,20 @@ app.post('/api/bookings', (req, res) => {
     res.status(201).json({ message: "Đặt lịch thành công! Chủ trọ sẽ sớm liên hệ lại." });
   });
 });
-
-// PHẦN MỚI: API CHO CHỦ TRỌ (HOST DASHBOARD)
-
-
 // 5. API: Lấy danh sách phòng của 1 chủ trọ cụ thể
 app.get('/api/host/rooms/:ownerId', (req, res) => {
   const ownerId = req.params.ownerId;
   const sql = "SELECT * FROM rooms WHERE owner_id = ? ORDER BY created_at DESC";
-  
   db.query(sql, [ownerId], (err, results) => {
     if (err) return res.status(500).json({ error: "Lỗi server" });
-    
     // Map lại rawPrice cho khớp frontend
     const mappedResults = results.map(room => ({ ...room, rawPrice: room.price }));
     res.json(mappedResults);
   });
 });
-
 // 6. API: Lấy danh sách lịch hẹn (Booking) gửi đến chủ trọ này
 app.get('/api/host/bookings/:ownerId', (req, res) => {
   const ownerId = req.params.ownerId;
-  
-  // Câu SQL này hơi phức tạp: Nó join 3 bảng để lấy tên Người đặt + Tên phòng
   const sql = `
     SELECT 
       b.id, 
@@ -249,9 +229,6 @@ app.put('/api/bookings/:id', (req, res) => {
   });
 });
 
-// PHẦN MỚI: API ADMIN (KIỂM DUYỆT)
-
-
 // 8. Lấy tất cả bài đang chờ duyệt
 app.get('/api/admin/pending-rooms', (req, res) => {
   const sql = "SELECT * FROM rooms WHERE status = 'pending' ORDER BY created_at DESC";
@@ -272,14 +249,9 @@ app.put('/api/admin/rooms/:id', (req, res) => {
     res.json({ message: "Đã cập nhật trạng thái bài đăng!" });
   });
 });
-
-// API QUÊN MẬT KHẨU (UC 7)
-
-
 // 10. Yêu cầu reset mật khẩu (Gửi Email giả lập)
 app.post('/api/auth/forgot-password', (req, res) => {
   const { email } = req.body;
-
   // Kiểm tra email có tồn tại không
   db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
     if (err) return res.status(500).json({ message: "Lỗi server" });
@@ -287,49 +259,38 @@ app.post('/api/auth/forgot-password', (req, res) => {
       // Bảo mật: Không báo lỗi nếu email không tồn tại, chỉ báo đã gửi
       return res.json({ message: "Nếu email tồn tại, link reset đã được gửi!" });
     }
-
     // Tạo token ngẫu nhiên
     const token = crypto.randomBytes(32).toString('hex');
     const expires = Date.now() + 3600000; // Hết hạn sau 1 giờ (ms)
-
     // Lưu token vào DB
     db.query(
       "UPDATE users SET reset_token = ?, reset_expires = ? WHERE email = ?",
       [token, expires, email],
       (updateErr) => {
         if (updateErr) return res.status(500).json({ message: "Lỗi lưu token" });
-
-        // --- GIẢ LẬP GỬI EMAIL (In ra Terminal) ---
         const resetLink = `http://localhost:5173/reset-password?token=${token}`;
         console.log(" [MOCK EMAIL] Yêu cầu reset pass cho:", email);
         console.log("Link Reset :", resetLink);
-
         res.json({ message: "Yêu cầu đã được gửi! Hãy kiểm tra Email (hoặc Terminal)." });
       }
     );
   });
 });
-
 // 11. Đặt lại mật khẩu mới
 app.post('/api/auth/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
-
   // Tìm user có token khớp và chưa hết hạn
   // Lưu ý: reset_expires là số (BIGINT) nên so sánh > Date.now()
   const sql = "SELECT * FROM users WHERE reset_token = ? AND reset_expires > ?";
-  
   db.query(sql, [token, Date.now()], async (err, results) => {
     if (err) return res.status(500).json({ message: "Lỗi server" });
     if (results.length === 0) {
       return res.status(400).json({ message: "Link không hợp lệ hoặc đã hết hạn!" });
     }
-
     const user = results[0];
-
     // Mã hóa mật khẩu mới
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
-
     // Cập nhật mật khẩu và xóa token
     db.query(
       "UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?",
@@ -341,7 +302,6 @@ app.post('/api/auth/reset-password', async (req, res) => {
     );
   });
 });
-// API QUẢN LÝ NGƯỜI DÙNG (UC 13)
 
 // 14. Lấy danh sách tất cả người dùng (Admin)
 app.get('/api/admin/users', verifyAdmin, (req, res) => {
@@ -364,7 +324,6 @@ app.put('/api/admin/users/:id', verifyAdmin, (req, res) => {
   });
 });
 
-// API BÁO CÁO VI PHẠM (UC 14)
 // 16. Gửi báo cáo mới (Người thuê)
 app.post('/api/reports', verifyToken, (req, res) => {
   const { room_id, reason } = req.body;
@@ -404,14 +363,9 @@ app.put('/api/admin/reports/:id', verifyAdmin, (req, res) => {
     res.json({ message: "Đã xử lý báo cáo!" });
   });
 });
-// =============================================
-// API YÊU THÍCH (FAVORITES)
-// =============================================
-
 // 19. Lấy danh sách phòng yêu thích của User đang đăng nhập
 app.get('/api/favorites', verifyToken, (req, res) => {
   const userId = req.user.id;
-  
   // Join bảng favorites với bảng rooms để lấy đầy đủ thông tin phòng
   const sql = `
     SELECT r.* FROM favorites f
@@ -419,10 +373,8 @@ app.get('/api/favorites', verifyToken, (req, res) => {
     WHERE f.user_id = ?
     ORDER BY f.created_at DESC
   `;
-
   db.query(sql, [userId], (err, results) => {
     if (err) return res.status(500).json({ error: "Lỗi server" });
-    
     // Map lại dữ liệu cho khớp frontend (rawPrice)
     const mappedResults = results.map(room => ({ ...room, rawPrice: room.price }));
     res.json(mappedResults);
@@ -433,7 +385,6 @@ app.get('/api/favorites', verifyToken, (req, res) => {
 app.post('/api/favorites', verifyToken, (req, res) => {
   const userId = req.user.id;
   const { room_id } = req.body;
-
   const sql = "INSERT IGNORE INTO favorites (user_id, room_id) VALUES (?, ?)";
   db.query(sql, [userId, room_id], (err, result) => {
     if (err) return res.status(500).json({ error: "Lỗi server" });
@@ -453,7 +404,6 @@ app.delete('/api/favorites/:roomId', verifyToken, (req, res) => {
   });
 });
 // API ĐÁNH GIÁ & BÌNH LUẬN (REVIEWS)
-
 app.get('/api/reviews/:roomId', (req, res) => {
   const roomId = req.params.roomId;
   // Join với bảng users để lấy tên người bình luận
@@ -493,8 +443,6 @@ app.get('/api/admin/all-rooms', verifyAdmin, (req, res) => {
     LEFT JOIN users u ON r.owner_id = u.id  
     ORDER BY r.created_at DESC
   `;
-  // ^ Lưu ý: Dùng LEFT JOIN thay vì JOIN
-  
   db.query(sql, (err, results) => {
     if (err) {
       console.error("Lỗi lấy danh sách bài:", err); // In lỗi ra terminal để xem

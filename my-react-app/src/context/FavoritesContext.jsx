@@ -1,19 +1,22 @@
 import React, { createContext, useState, useEffect } from 'react';
-import axios from '../api/axiosClient'; // Dùng client đã cấu hình Token
-import { useAuth } from './AuthContext'; // Lấy thông tin User
-import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom'; // 1. Import để chuyển trang
+import { toast } from 'react-toastify';         // 2. Import để hiện thông báo đẹp
+import axios from '../api/axiosClient';
+import { useAuth } from './AuthContext';
+
 export const FavoritesContext = createContext();
 
 export const FavoritesProvider = ({ children }) => {
-  const { user } = useAuth(); // Lấy user hiện tại
+  const { user } = useAuth();
   const [favorites, setFavorites] = useState([]);
+  const navigate = useNavigate(); // Khởi tạo hook điều hướng
 
-  // 1. Khi User thay đổi (Đăng nhập/Đăng xuất/F5), tải lại danh sách yêu thích của người đó
+  // Tải danh sách khi user thay đổi
   useEffect(() => {
     if (user) {
       fetchFavorites();
     } else {
-      setFavorites([]); // Nếu chưa đăng nhập thì danh sách rỗng
+      setFavorites([]); // Reset nếu logout
     }
   }, [user]);
 
@@ -26,10 +29,12 @@ export const FavoritesProvider = ({ children }) => {
     }
   };
 
-  // 2. Hàm Toggle (Like/Unlike)
+  // --- HÀM XỬ LÝ LIKE / UNLIKE ---
   const toggleFavorite = async (room) => {
+    // 1. KIỂM TRA ĐĂNG NHẬP (Chặn ngay tại đây)
     if (!user) {
-      toast.success("Vui lòng đăng nhập để lưu phòng yêu thích!");
+      toast.warning("Bạn cần đăng nhập để lưu phòng yêu thích!");
+      navigate('/auth'); // Chuyển ngay sang trang Login
       return;
     }
 
@@ -37,19 +42,19 @@ export const FavoritesProvider = ({ children }) => {
 
     try {
       if (isLiked) {
-        // Nếu đã thích -> Gọi API Xóa
+        // Nếu đã thích -> Bỏ thích
         await axios.delete(`/favorites/${room.id}`);
-        // Cập nhật giao diện ngay lập tức (Optimistic UI)
         setFavorites(prev => prev.filter(fav => fav.id !== room.id));
+        toast.info("Đã bỏ khỏi danh sách yêu thích");
       } else {
-        // Nếu chưa thích -> Gọi API Thêm
+        // Nếu chưa thích -> Thêm vào
         await axios.post('/favorites', { room_id: room.id });
-        // Cập nhật giao diện
         setFavorites(prev => [...prev, room]);
+        toast.success("Đã thêm vào danh sách yêu thích");
       }
     } catch (error) {
-      alert("Lỗi cập nhật yêu thích!");
-      fetchFavorites(); // Nếu lỗi thì load lại dữ liệu gốc cho đúng
+      toast.error("Lỗi cập nhật! Vui lòng thử lại.");
+      fetchFavorites(); // Load lại nếu lỗi để đồng bộ
     }
   };
 

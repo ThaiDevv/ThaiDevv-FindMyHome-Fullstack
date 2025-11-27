@@ -150,7 +150,38 @@ const Auth = () => {
                 <i className='bx bxs-lock-alt'></i>
               </div>
 
-              {/* Phần chọn Role giữ nguyên... */}
+              {/* Phần chọn Role */}
+              <div style={{ margin: '15px 0', textAlign: 'left' }}>
+                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Bạn muốn đăng ký làm:</p>
+                  
+                  <div style={{ display: 'flex', gap: '20px' }}>
+                    {/* Lựa chọn 1: Người thuê */}
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '5px' }}>
+                      <input 
+                        type="radio" 
+                        name="role" 
+                        value="tenant"
+                        checked={regRole === 'tenant'}
+                        onChange={() => setRegRole('tenant')}
+                        style={{ width: '16px', height: '16px', margin: 0 }} 
+                      />
+                      <span style={{ fontSize: '15px', color: '#333' }}>Người tìm phòng</span>
+                    </label>
+
+                    {/* Lựa chọn 2: Chủ trọ */}
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '5px' }}>
+                      <input 
+                        type="radio" 
+                        name="role" 
+                        value="host"
+                        checked={regRole === 'host'}
+                        onChange={() => setRegRole('host')}
+                        style={{ width: '16px', height: '16px', margin: 0 }}
+                      />
+                      <span style={{ fontSize: '15px', color: '#333' }}>Chủ trọ / Môi giới</span>
+                    </label>
+                  </div>
+</div>
               {/* Nút Submit giữ nguyên... */}
       
               <button type="submit" className="btn">Đăng Ký</button>
